@@ -139,4 +139,4 @@ if "lang_code" not in st.session_state:
 
 destination = st.text_input("📍 목적지", placeholder="예: 제주 성산일출봉",
                             value=st.session_state.destination)
-vehicle_type = st.selectbox("🚙 차종", ["소형", "중형",
+vehicle_type = st.selectbox("🚙 차종", ["소형", "중형", "대형", "SUV"], index=["소형", "중형", "대형", "SUV"].index(st.session_state.vehicle_type))
