@@ -92,68 +92,33 @@ def check_school_zone(dest_lat, dest_lng):
             warnings.append(zone["name"])
     return warnings
 
-# ── Streamlit UI ─────────────────────────
-st.set_page_config(page_title="KVanguard Drive", page_icon="🚗", layout="centered")
-st.title("🚗 KVanguard Drive")
-st.caption("외국인 렌터카 운전자를 위한 AI 드라이빙 어시스턴트")
+def run_search(destination, vehicle_type, lang_code):
+    t = lambda text: translate(text, lang_code)
 
-# 입력
-destination = st.text_input("📍 목적지를 입력하세요", placeholder="예: 제주 성산일출봉")
-vehicle_type = st.selectbox("🚙 차종 선택", ["소형", "중형", "대형", "SUV"])
-language = st.selectbox("🌐 언어 선택", list(languages.keys()))
-lang_code = languages[language]
+    url = "https://dapi.kakao.com/v2/local/search/keyword.json"
+    headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
+    params = {"query": destination + " 주차장", "size": 5}
+    response = requests.get(url, headers=headers, params=params)
+    parking_data = response.json()
+    first = parking_data["documents"][0]
 
-if st.button("🔍 검색하기"):
-    if not destination:
-        st.warning("목적지를 입력해주세요!")
-    else:
-        t = lambda text: translate(text, lang_code)
+    map_center = [float(first["y"]), float(first["x"])]
+    m = folium.Map(location=map_center, zoom_start=14)
 
-        with st.spinner(t("검색 중...")):
-            # 1. 주차장 검색
-            url = "https://dapi.kakao.com/v2/local/search/keyword.json"
-            headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
-            params = {"query": destination + " 주차장", "size": 5}
-            response = requests.get(url, headers=headers, params=params)
-            parking_data = response.json()
-            first = parking_data["documents"][0]
+    st.subheader(t("📍 주변 주차장 위험도"))
+    for p in parking_data["documents"]:
+        name = p["place_name"]
+        lat, lng = float(p["y"]), float(p["x"])
+        score, level, reasons = calculate_danger_score(name, p["category_name"])
+        color = "red" if score >= 50 else "orange" if score >= 20 else "green"
+        st.write(f"{level} **{name}**")
+        st.write(f"　{t('주소')}: {p['address_name']} | {t('점수')}: {score}{t('점')}")
+        folium.Marker(
+            location=[lat, lng],
+            tooltip=f"{level} {name}",
+            popup=f"{name}\n{t('점수')}: {score}{t('점')}",
+            icon=folium.Icon(color=color)
+        ).add_to(m)
 
-            # 2. 지도
-            map_center = [float(first["y"]), float(first["x"])]
-            m = folium.Map(location=map_center, zoom_start=14)
-
-            # 3. 주차장 위험도
-            st.subheader(t("📍 주변 주차장 위험도"))
-            for p in parking_data["documents"]:
-                name = p["place_name"]
-                lat, lng = float(p["y"]), float(p["x"])
-                score, level, reasons = calculate_danger_score(name, p["category_name"])
-                color = "red" if score >= 50 else "orange" if score >= 20 else "green"
-                st.write(f"{level} **{name}**")
-                st.write(f"　{t('주소')}: {p['address_name']} | {t('점수')}: {score}{t('점')}")
-                folium.Marker(
-                    location=[lat, lng],
-                    tooltip=f"{level} {name}",
-                    popup=f"{name}\n{t('점수')}: {score}{t('점')}",
-                    icon=folium.Icon(color=color)
-                ).add_to(m)
-
-            # 4. 스쿨존 경고
-            st.subheader(t("🏫 어린이보호구역 확인"))
-            warnings = check_school_zone(float(first["y"]), float(first["x"]))
-            if warnings:
-                for w in warnings:
-                    st.error(f"🔴 {t('경고!')} {w} {t('근처예요! 30km/h 감속!')}")
-            else:
-                st.success(t("✅ 주변 500m 내 어린이보호구역 없음"))
-
-            # 5. 추천 코스
-            st.subheader(t(f"🗺️ 추천 드라이브 코스"))
-            for c in courses:
-                if vehicle_type in c["recommended_vehicle"]:
-                    with st.expander(f"✅ {t(c['name'])} | {t(c['difficulty'])} | {c['duration']}"):
-                        st.write(" → ".join([t(s) for s in c["spots"]]))
-
-            # 6. 지도
-            st.subheader(t("🗾 지도"))
-            st_folium(m, width=700, height=400)
+    st.subheader(t("🏫 어린이보호구역 확인"))
+    warnings = check_school_zone(float(first["y"]), float(first["x"]))
