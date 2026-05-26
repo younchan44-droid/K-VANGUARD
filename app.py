@@ -5,27 +5,17 @@ from streamlit_folium import st_folium
 import math
 from deep_translator import GoogleTranslator
 
-# ── API 키 ──────────────────────────────
 KAKAO_API_KEY = "fc59295141197b8cf11c0c47dfa5c92c"
 
-# ── 지원 언어 목록 ───────────────────────
 languages = {
     "한국어": "ko", "English": "en", "日本語": "ja", "中文(简体)": "zh-CN",
-    "中文(繁體)": "zh-TW", "Español": "es", "Français": "fr", "Deutsch": "de",
-    "Italiano": "it", "Português": "pt", "Русский": "ru", "العربية": "ar",
-    "हिन्दी": "hi", "বাংলা": "bn", "Bahasa Indonesia": "id", "Bahasa Melayu": "ms",
-    "Filipino": "tl", "Tiếng Việt": "vi", "ภาษาไทย": "th", "Türkçe": "tr",
-    "Polski": "pl", "Nederlands": "nl", "Svenska": "sv", "Norsk": "no",
-    "Dansk": "da", "Suomi": "fi", "Ελληνικά": "el", "Čeština": "cs",
-    "Magyar": "hu", "Română": "ro", "Български": "bg", "Hrvatski": "hr",
-    "Slovenčina": "sk", "Українська": "uk", "עברית": "he", "فارسی": "fa",
-    "اردو": "ur", "Swahili": "sw", "Afrikaans": "af", "မြန်မာဘာသာ": "my",
-    "ខ្មែរ": "km", "ລາວ": "lo", "සිංහල": "si", "नेपाली": "ne",
-    "монгол": "mn", "ქართული": "ka", "Հայերեն": "hy", "Azərbaycan": "az",
-    "O'zbek": "uz"
+    "Español": "es", "Français": "fr", "Deutsch": "de", "Italiano": "it",
+    "Português": "pt", "Русский": "ru", "العربية": "ar", "हिन्दी": "hi",
+    "Bahasa Indonesia": "id", "Tiếng Việt": "vi", "ภาษาไทย": "th",
+    "Türkçe": "tr", "Polski": "pl", "Nederlands": "nl", "Svenska": "sv",
+    "Ελληνικά": "el", "Українська": "uk", "עברית": "he", "Swahili": "sw",
 }
 
-# ── 추천 코스 데이터 ─────────────────────
 courses = [
     {"id": 1, "name": "서쪽 해안 드라이브", "difficulty": "쉬움", "duration": "2시간",
      "spots": ["협재해수욕장", "한림공원", "애월해안도로"], "recommended_vehicle": ["소형", "중형"]},
@@ -49,7 +39,6 @@ courses = [
      "spots": ["산굼부리", "절물자연휴양림", "교래자연휴양림"], "recommended_vehicle": ["중형", "SUV"]},
 ]
 
-# ── 스쿨존 데이터 ────────────────────────
 school_zones = [
     {"name": "제주북초등학교 스쿨존", "lat": 33.5145, "lng": 126.5312},
     {"name": "신제주초등학교 스쿨존", "lat": 33.4892, "lng": 126.4789},
@@ -58,7 +47,6 @@ school_zones = [
     {"name": "한림초등학교 스쿨존", "lat": 33.4139, "lng": 126.2661},
 ]
 
-# ── 함수들 ──────────────────────────────
 def translate(text, lang_code):
     if lang_code == "ko":
         return text
@@ -69,20 +57,17 @@ def translate(text, lang_code):
 
 def calculate_danger_score(place_name, category):
     score = 0
-    reasons = []
     if "기계식" in place_name or "기계식" in category:
         score += 40
-        reasons.append("기계식 주차장 (+40점)")
     if "스쿨존" in place_name or "어린이" in place_name:
         score += 20
-        reasons.append("어린이보호구역 (+20점)")
     if score >= 50:
         level = "🔴 위험"
     elif score >= 20:
         level = "🟡 주의"
     else:
         level = "🟢 안전"
-    return score, level, reasons
+    return score, level
 
 def check_school_zone(dest_lat, dest_lng):
     warnings = []
@@ -92,33 +77,61 @@ def check_school_zone(dest_lat, dest_lng):
             warnings.append(zone["name"])
     return warnings
 
-def run_search(destination, vehicle_type, lang_code):
+st.set_page_config(page_title="KVanguard Drive", page_icon="🚗", layout="centered")
+st.title("🚗 KVanguard Drive")
+st.caption("외국인 렌터카 운전자를 위한 드라이빙 어시스턴트")
+
+destination = st.text_input("📍 목적지", placeholder="예: 제주 성산일출봉")
+vehicle_type = st.selectbox("🚙 차종", ["소형", "중형", "대형", "SUV"])
+language = st.selectbox("🌐 언어", list(languages.keys()))
+lang_code = languages[language]
+
+if st.button("🔍 검색"):
+    if not destination:
+        st.warning("목적지를 입력해주세요!")
+        st.stop()
+
     t = lambda text: translate(text, lang_code)
 
-    url = "https://dapi.kakao.com/v2/local/search/keyword.json"
-    headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
-    params = {"query": destination + " 주차장", "size": 5}
-    response = requests.get(url, headers=headers, params=params)
-    parking_data = response.json()
-    first = parking_data["documents"][0]
+    with st.spinner(t("검색 중...")):
+        url = "https://dapi.kakao.com/v2/local/search/keyword.json"
+        headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
+        params = {"query": destination + " 주차장", "size": 5}
+        res = requests.get(url, headers=headers, params=params)
+        docs = res.json().get("documents", [])
 
-    map_center = [float(first["y"]), float(first["x"])]
-    m = folium.Map(location=map_center, zoom_start=14)
+        if not docs:
+            st.error(t("검색 결과가 없어요. 다른 목적지를 입력해주세요."))
+            st.stop()
 
-    st.subheader(t("📍 주변 주차장 위험도"))
-    for p in parking_data["documents"]:
-        name = p["place_name"]
-        lat, lng = float(p["y"]), float(p["x"])
-        score, level, reasons = calculate_danger_score(name, p["category_name"])
-        color = "red" if score >= 50 else "orange" if score >= 20 else "green"
-        st.write(f"{level} **{name}**")
-        st.write(f"　{t('주소')}: {p['address_name']} | {t('점수')}: {score}{t('점')}")
-        folium.Marker(
-            location=[lat, lng],
-            tooltip=f"{level} {name}",
-            popup=f"{name}\n{t('점수')}: {score}{t('점')}",
-            icon=folium.Icon(color=color)
-        ).add_to(m)
+        first = docs[0]
+        lat0, lng0 = float(first["y"]), float(first["x"])
 
-    st.subheader(t("🏫 어린이보호구역 확인"))
-    warnings = check_school_zone(float(first["y"]), float(first["x"]))
+        st.subheader(t("📍 주변 주차장 위험도"))
+        m = folium.Map(location=[lat0, lng0], zoom_start=14)
+        for p in docs:
+            name = p["place_name"]
+            lat, lng = float(p["y"]), float(p["x"])
+            score, level = calculate_danger_score(name, p["category_name"])
+            color = "red" if score >= 50 else "orange" if score >= 20 else "green"
+            st.write(f"{level} **{name}**")
+            st.caption(f"{p['address_name']} | {t('위험점수')}: {score}점")
+            folium.Marker([lat, lng], tooltip=f"{level} {name}",
+                         icon=folium.Icon(color=color)).add_to(m)
+
+        st.subheader(t("🏫 어린이보호구역"))
+        zone_warnings = check_school_zone(lat0, lng0)
+        if zone_warnings:
+            for w in zone_warnings:
+                st.error(f"🔴 {t('경고')} - {w} | 30km/h")
+        else:
+            st.success(t("✅ 주변 어린이보호구역 없음"))
+
+        st.subheader(t("🗺️ 추천 코스"))
+        for c in courses:
+            if vehicle_type in c["recommended_vehicle"]:
+                with st.expander(f"✅ {t(c['name'])} | {t(c['difficulty'])} | {c['duration']}"):
+                    st.write(" → ".join([t(s) for s in c["spots"]]))
+
+        st.subheader(t("🗾 지도"))
+        st_folium(m, width=700, height=400)
