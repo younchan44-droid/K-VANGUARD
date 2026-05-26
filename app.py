@@ -77,61 +77,66 @@ def check_school_zone(dest_lat, dest_lng):
             warnings.append(zone["name"])
     return warnings
 
+def show_results(destination, vehicle_type, lang_code):
+    t = lambda text: translate(text, lang_code)
+
+    url = "https://dapi.kakao.com/v2/local/search/keyword.json"
+    headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
+    params = {"query": destination + " 주차장", "size": 5}
+    res = requests.get(url, headers=headers, params=params)
+    docs = res.json().get("documents", [])
+
+    if not docs:
+        st.error(t("검색 결과가 없어요. 다른 목적지를 입력해주세요."))
+        return
+
+    first = docs[0]
+    lat0, lng0 = float(first["y"]), float(first["x"])
+
+    st.subheader(t("📍 주변 주차장 위험도"))
+    m = folium.Map(location=[lat0, lng0], zoom_start=14)
+    for p in docs:
+        name = p["place_name"]
+        lat, lng = float(p["y"]), float(p["x"])
+        score, level = calculate_danger_score(name, p["category_name"])
+        color = "red" if score >= 50 else "orange" if score >= 20 else "green"
+        st.write(f"{level} **{name}**")
+        st.caption(f"{p['address_name']} | {t('위험점수')}: {score}점")
+        folium.Marker([lat, lng], tooltip=f"{level} {name}",
+                     icon=folium.Icon(color=color)).add_to(m)
+
+    st.subheader(t("🏫 어린이보호구역"))
+    zone_warnings = check_school_zone(lat0, lng0)
+    if zone_warnings:
+        for w in zone_warnings:
+            st.error(f"🔴 {t('경고')} - {w} | 30km/h")
+    else:
+        st.success(t("✅ 주변 어린이보호구역 없음"))
+
+    st.subheader(t("🗺️ 추천 코스"))
+    for c in courses:
+        if vehicle_type in c["recommended_vehicle"]:
+            with st.expander(f"✅ {t(c['name'])} | {t(c['difficulty'])} | {c['duration']}"):
+                st.write(" → ".join([t(s) for s in c["spots"]]))
+
+    st.subheader(t("🗾 지도"))
+    st_folium(m, width=700, height=400)
+
+# ── UI ───────────────────────────────────
 st.set_page_config(page_title="KVanguard Drive", page_icon="🚗", layout="centered")
 st.title("🚗 KVanguard Drive")
 st.caption("외국인 렌터카 운전자를 위한 드라이빙 어시스턴트")
 
-destination = st.text_input("📍 목적지", placeholder="예: 제주 성산일출봉")
-vehicle_type = st.selectbox("🚙 차종", ["소형", "중형", "대형", "SUV"])
-language = st.selectbox("🌐 언어", list(languages.keys()))
-lang_code = languages[language]
+# session_state 초기화
+if "searched" not in st.session_state:
+    st.session_state.searched = False
+if "destination" not in st.session_state:
+    st.session_state.destination = ""
+if "vehicle_type" not in st.session_state:
+    st.session_state.vehicle_type = "소형"
+if "lang_code" not in st.session_state:
+    st.session_state.lang_code = "ko"
 
-if st.button("🔍 검색"):
-    if not destination:
-        st.warning("목적지를 입력해주세요!")
-        st.stop()
-
-    t = lambda text: translate(text, lang_code)
-
-    with st.spinner(t("검색 중...")):
-        url = "https://dapi.kakao.com/v2/local/search/keyword.json"
-        headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
-        params = {"query": destination + " 주차장", "size": 5}
-        res = requests.get(url, headers=headers, params=params)
-        docs = res.json().get("documents", [])
-
-        if not docs:
-            st.error(t("검색 결과가 없어요. 다른 목적지를 입력해주세요."))
-            st.stop()
-
-        first = docs[0]
-        lat0, lng0 = float(first["y"]), float(first["x"])
-
-        st.subheader(t("📍 주변 주차장 위험도"))
-        m = folium.Map(location=[lat0, lng0], zoom_start=14)
-        for p in docs:
-            name = p["place_name"]
-            lat, lng = float(p["y"]), float(p["x"])
-            score, level = calculate_danger_score(name, p["category_name"])
-            color = "red" if score >= 50 else "orange" if score >= 20 else "green"
-            st.write(f"{level} **{name}**")
-            st.caption(f"{p['address_name']} | {t('위험점수')}: {score}점")
-            folium.Marker([lat, lng], tooltip=f"{level} {name}",
-                         icon=folium.Icon(color=color)).add_to(m)
-
-        st.subheader(t("🏫 어린이보호구역"))
-        zone_warnings = check_school_zone(lat0, lng0)
-        if zone_warnings:
-            for w in zone_warnings:
-                st.error(f"🔴 {t('경고')} - {w} | 30km/h")
-        else:
-            st.success(t("✅ 주변 어린이보호구역 없음"))
-
-        st.subheader(t("🗺️ 추천 코스"))
-        for c in courses:
-            if vehicle_type in c["recommended_vehicle"]:
-                with st.expander(f"✅ {t(c['name'])} | {t(c['difficulty'])} | {c['duration']}"):
-                    st.write(" → ".join([t(s) for s in c["spots"]]))
-
-        st.subheader(t("🗾 지도"))
-        st_folium(m, width=700, height=400)
+destination = st.text_input("📍 목적지", placeholder="예: 제주 성산일출봉",
+                            value=st.session_state.destination)
+vehicle_type = st.selectbox("🚙 차종", ["소형", "중형",
