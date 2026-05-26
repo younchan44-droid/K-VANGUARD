@@ -17,26 +17,16 @@ languages = {
 }
 
 courses = [
-    {"id": 1, "name": "서쪽 해안 드라이브", "difficulty": "쉬움", "duration": "2시간",
-     "spots": ["협재해수욕장", "한림공원", "애월해안도로"], "recommended_vehicle": ["소형", "중형"]},
-    {"id": 2, "name": "성산 일출 코스", "difficulty": "쉬움", "duration": "3시간",
-     "spots": ["성산일출봉", "광치기해변", "섭지코지"], "recommended_vehicle": ["소형", "중형", "대형"]},
-    {"id": 3, "name": "한라산 둘레길 코스", "difficulty": "보통", "duration": "4시간",
-     "spots": ["1100고지", "어리목", "영실"], "recommended_vehicle": ["중형", "SUV"]},
-    {"id": 4, "name": "남쪽 올레길 코스", "difficulty": "쉬움", "duration": "3시간",
-     "spots": ["천지연폭포", "정방폭포", "외돌개"], "recommended_vehicle": ["소형", "중형"]},
-    {"id": 5, "name": "동쪽 해녀 문화 코스", "difficulty": "쉬움", "duration": "3시간",
-     "spots": ["김녕해수욕장", "월정리해변", "세화해변"], "recommended_vehicle": ["소형", "중형"]},
-    {"id": 6, "name": "북쪽 감귤밭 코스", "difficulty": "보통", "duration": "3시간",
-     "spots": ["다랑쉬오름", "비자림", "만장굴"], "recommended_vehicle": ["중형", "SUV"]},
-    {"id": 7, "name": "제주시 야경 코스", "difficulty": "쉬움", "duration": "2시간",
-     "spots": ["사라봉", "별도봉", "제주항"], "recommended_vehicle": ["소형", "중형"]},
-    {"id": 8, "name": "서귀포 감성 카페 코스", "difficulty": "쉬움", "duration": "2시간",
-     "spots": ["카멜리아힐", "서귀포매일올레시장", "이중섭거리"], "recommended_vehicle": ["소형", "중형"]},
-    {"id": 9, "name": "우도 당일치기 코스", "difficulty": "쉬움", "duration": "4시간",
-     "spots": ["우도봉", "홍조단괴해변", "검멀레해변"], "recommended_vehicle": ["소형"]},
-    {"id": 10, "name": "중산간 힐링 코스", "difficulty": "보통", "duration": "3시간",
-     "spots": ["산굼부리", "절물자연휴양림", "교래자연휴양림"], "recommended_vehicle": ["중형", "SUV"]},
+    {"id": 1, "name": "서쪽 해안 드라이브", "difficulty": "쉬움", "duration": "2시간", "spots": ["협재해수욕장", "한림공원", "애월해안도로"], "recommended_vehicle": ["소형", "중형"]},
+    {"id": 2, "name": "성산 일출 코스", "difficulty": "쉬움", "duration": "3시간", "spots": ["성산일출봉", "광치기해변", "섭지코지"], "recommended_vehicle": ["소형", "중형", "대형"]},
+    {"id": 3, "name": "한라산 둘레길 코스", "difficulty": "보통", "duration": "4시간", "spots": ["1100고지", "어리목", "영실"], "recommended_vehicle": ["중형", "SUV"]},
+    {"id": 4, "name": "남쪽 올레길 코스", "difficulty": "쉬움", "duration": "3시간", "spots": ["천지연폭포", "정방폭포", "외돌개"], "recommended_vehicle": ["소형", "중형"]},
+    {"id": 5, "name": "동쪽 해녀 문화 코스", "difficulty": "쉬움", "duration": "3시간", "spots": ["김녕해수욕장", "월정리해변", "세화해변"], "recommended_vehicle": ["소형", "중형"]},
+    {"id": 6, "name": "북쪽 감귤밭 코스", "difficulty": "보통", "duration": "3시간", "spots": ["다랑쉬오름", "비자림", "만장굴"], "recommended_vehicle": ["중형", "SUV"]},
+    {"id": 7, "name": "제주시 야경 코스", "difficulty": "쉬움", "duration": "2시간", "spots": ["사라봉", "별도봉", "제주항"], "recommended_vehicle": ["소형", "중형"]},
+    {"id": 8, "name": "서귀포 감성 카페 코스", "difficulty": "쉬움", "duration": "2시간", "spots": ["카멜리아힐", "서귀포매일올레시장", "이중섭거리"], "recommended_vehicle": ["소형", "중형"]},
+    {"id": 9, "name": "우도 당일치기 코스", "difficulty": "쉬움", "duration": "4시간", "spots": ["우도봉", "홍조단괴해변", "검멀레해변"], "recommended_vehicle": ["소형"]},
+    {"id": 10, "name": "중산간 힐링 코스", "difficulty": "보통", "duration": "3시간", "spots": ["산굼부리", "절물자연휴양림", "교래자연휴양림"], "recommended_vehicle": ["중형", "SUV"]},
 ]
 
 school_zones = [
@@ -79,32 +69,28 @@ def check_school_zone(dest_lat, dest_lng):
 
 def show_results(destination, vehicle_type, lang_code):
     t = lambda text: translate(text, lang_code)
-
     url = "https://dapi.kakao.com/v2/local/search/keyword.json"
     headers = {"Authorization": f"KakaoAK {KAKAO_API_KEY}"}
     params = {"query": destination + " 주차장", "size": 5}
     res = requests.get(url, headers=headers, params=params)
     docs = res.json().get("documents", [])
-
     if not docs:
-        st.error(t("검색 결과가 없어요. 다른 목적지를 입력해주세요."))
+        st.error(t("검색 결과가 없어요."))
         return
-
     first = docs[0]
-    lat0, lng0 = float(first["y"]), float(first["x"])
-
-    st.subheader(t("📍 주변 주차장 위험도"))
+    lat0 = float(first["y"])
+    lng0 = float(first["x"])
     m = folium.Map(location=[lat0, lng0], zoom_start=14)
+    st.subheader(t("📍 주변 주차장 위험도"))
     for p in docs:
         name = p["place_name"]
-        lat, lng = float(p["y"]), float(p["x"])
+        lat = float(p["y"])
+        lng = float(p["x"])
         score, level = calculate_danger_score(name, p["category_name"])
         color = "red" if score >= 50 else "orange" if score >= 20 else "green"
         st.write(f"{level} **{name}**")
         st.caption(f"{p['address_name']} | {t('위험점수')}: {score}점")
-        folium.Marker([lat, lng], tooltip=f"{level} {name}",
-                     icon=folium.Icon(color=color)).add_to(m)
-
+        folium.Marker([lat, lng], tooltip=f"{level} {name}", icon=folium.Icon(color=color)).add_to(m)
     st.subheader(t("🏫 어린이보호구역"))
     zone_warnings = check_school_zone(lat0, lng0)
     if zone_warnings:
@@ -112,31 +98,34 @@ def show_results(destination, vehicle_type, lang_code):
             st.error(f"🔴 {t('경고')} - {w} | 30km/h")
     else:
         st.success(t("✅ 주변 어린이보호구역 없음"))
-
     st.subheader(t("🗺️ 추천 코스"))
     for c in courses:
         if vehicle_type in c["recommended_vehicle"]:
             with st.expander(f"✅ {t(c['name'])} | {t(c['difficulty'])} | {c['duration']}"):
                 st.write(" → ".join([t(s) for s in c["spots"]]))
-
     st.subheader(t("🗾 지도"))
     st_folium(m, width=700, height=400)
 
-# ── UI ───────────────────────────────────
 st.set_page_config(page_title="KVanguard Drive", page_icon="🚗", layout="centered")
 st.title("🚗 KVanguard Drive")
 st.caption("외국인 렌터카 운전자를 위한 드라이빙 어시스턴트")
 
-# session_state 초기화
 if "searched" not in st.session_state:
     st.session_state.searched = False
-if "destination" not in st.session_state:
-    st.session_state.destination = ""
-if "vehicle_type" not in st.session_state:
-    st.session_state.vehicle_type = "소형"
-if "lang_code" not in st.session_state:
-    st.session_state.lang_code = "ko"
 
-destination = st.text_input("📍 목적지", placeholder="예: 제주 성산일출봉",
-                            value=st.session_state.destination)
-vehicle_type = st.selectbox("🚙 차종", ["소형", "중형", "대형", "SUV"], index=["소형", "중형", "대형", "SUV"].index(st.session_state.vehicle_type))
+destination = st.text_input("📍 목적지", placeholder="예: 제주 성산일출봉")
+vehicle_type = st.selectbox("🚙 차종", ["소형", "중형", "대형", "SUV"])
+language = st.selectbox("🌐 언어", list(languages.keys()))
+lang_code = languages[language]
+
+if st.button("🔍 검색하기"):
+    if not destination:
+        st.warning("목적지를 입력해주세요!")
+    else:
+        st.session_state.searched = True
+        st.session_state.dest = destination
+        st.session_state.vehicle = vehicle_type
+        st.session_state.lang = lang_code
+
+if st.session_state.searched:
+    show_results(st.session_state.dest, st.session_state.vehicle, st.session_state.lang)
