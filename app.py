@@ -1,3 +1,4 @@
+"fc59295141197b8cf11c0c47dfa5c92c"
 import streamlit as st
 import requests
 import folium
@@ -6,6 +7,210 @@ import math
 from deep_translator import GoogleTranslator
 
 KAKAO_API_KEY = "fc59295141197b8cf11c0c47dfa5c92c"
+
+# 한국적 세련된 디자인 CSS
+STYLE = """
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+html, body, [class*="css"] {
+    font-family: 'Noto Sans KR', 'DM Sans', sans-serif;
+}
+
+.stApp {
+    background-color: #F7F5F0;
+}
+
+.main-header {
+    text-align: center;
+    padding: 2rem 0 1rem 0;
+}
+
+.main-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #1a1a2e;
+    letter-spacing: -0.5px;
+}
+
+.main-subtitle {
+    font-size: 0.85rem;
+    color: #888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-top: 4px;
+}
+
+.divider {
+    width: 40px;
+    height: 3px;
+    background: #0077B6;
+    margin: 12px auto;
+    border-radius: 2px;
+}
+
+.card {
+    background: white;
+    border-radius: 16px;
+    padding: 20px;
+    margin-bottom: 12px;
+    border: 1px solid #efefef;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+    transition: box-shadow 0.2s;
+}
+
+.card:hover {
+    box-shadow: 0 4px 20px rgba(0,119,182,0.1);
+}
+
+.rental-card {
+    background: white;
+    border-radius: 16px;
+    padding: 18px 20px;
+    margin-bottom: 10px;
+    border: 1px solid #efefef;
+    text-decoration: none;
+    display: block;
+    color: #1a1a2e;
+    transition: all 0.2s;
+}
+
+.rental-card:hover {
+    border-color: #0077B6;
+    box-shadow: 0 4px 20px rgba(0,119,182,0.12);
+    transform: translateY(-1px);
+}
+
+.rental-name {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1a1a2e;
+}
+
+.rental-desc {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 3px;
+}
+
+.tag {
+    display: inline-block;
+    background: #EBF5FB;
+    color: #0077B6;
+    padding: 3px 10px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    margin-top: 6px;
+}
+
+.vehicle-match {
+    background: white;
+    border-radius: 14px;
+    padding: 16px 18px;
+    margin-bottom: 10px;
+    border-left: 3px solid #0077B6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+}
+
+.vehicle-match-title {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #1a1a2e;
+}
+
+.vehicle-match-sub {
+    font-size: 0.8rem;
+    color: #888;
+    margin-top: 2px;
+}
+
+.nav-btn {
+    display: inline-block;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-decoration: none;
+    margin-right: 8px;
+    margin-bottom: 8px;
+    transition: opacity 0.2s;
+}
+
+.nav-btn:hover {
+    opacity: 0.85;
+}
+
+.section-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #0077B6;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+    margin-top: 20px;
+}
+
+.danger-item {
+    background: white;
+    border-radius: 12px;
+    padding: 14px 16px;
+    margin-bottom: 8px;
+    border: 1px solid #efefef;
+    font-size: 0.9rem;
+}
+
+.stTabs [data-baseweb="tab-list"] {
+    gap: 4px;
+    background: white;
+    border-radius: 12px;
+    padding: 4px;
+    border: 1px solid #efefef;
+}
+
+.stTabs [data-baseweb="tab"] {
+    border-radius: 8px;
+    font-weight: 500;
+    font-size: 0.875rem;
+    color: #888;
+    padding: 8px 16px;
+}
+
+.stTabs [aria-selected="true"] {
+    background: #0077B6 !important;
+    color: white !important;
+}
+
+.stTextInput > div > div > input {
+    border-radius: 10px;
+    border: 1px solid #e0e0e0;
+    padding: 10px 14px;
+    font-family: 'Noto Sans KR', sans-serif;
+    background: white;
+}
+
+.stSelectbox > div > div {
+    border-radius: 10px;
+    background: white;
+}
+
+.stButton > button {
+    background: #0077B6;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-weight: 600;
+    font-family: 'Noto Sans KR', sans-serif;
+    font-size: 0.9rem;
+    transition: background 0.2s;
+}
+
+.stButton > button:hover {
+    background: #005f92;
+}
+</style>
+"""
 
 languages = {
     "한국어": "ko", "English": "en", "日本語": "ja", "中文(简体)": "zh-CN",
@@ -16,7 +221,6 @@ languages = {
     "Ελληνικά": "el", "Українська": "uk", "עברית": "he", "Swahili": "sw",
 }
 
-# ── 차량 데이터 ──────────────────────────
 vehicles = {
     "소형": {
         "아반떼": {"foreign": ["Civic", "Corolla", "Golf", "Focus", "Mazda3"], "rental": ["제주렌트카", "조아렌트카", "제주원렌트카"]},
@@ -42,13 +246,12 @@ vehicles = {
     },
 }
 
-# ── 렌트카 업체 데이터 ────────────────────
 rental_info = {
-    "제주렌트카": {"url": "https://www.jejurentcar.co.kr", "desc": "1978년 창립 국내 1호, 공항 셔틀 1분"},
-    "제주엔젤카": {"url": "https://www.jejuangeltour.com", "desc": "완전자차 무료, 우수관광사업체"},
-    "제주원렌트카": {"url": "https://www.jejuonecar.kr", "desc": "최대 94% 할인, 24시간 무료취소"},
-    "롯데렌터카": {"url": "https://www.lotterentacar.net/hp/kor/reservation/index.do?state=2&rentArea=6", "desc": "제주 웰컴 쿠폰팩 제공"},
-    "조아렌트카": {"url": "https://www.joarent.com", "desc": "즉시 예약 확정, 가성비 최고"},
+    "제주렌트카": {"url": "https://www.jejurentcar.co.kr", "desc": "1978년 창립 국내 1호"},
+    "제주엔젤카": {"url": "https://www.jejuangeltour.com", "desc": "완전자차 무료"},
+    "제주원렌트카": {"url": "https://www.jejuonecar.kr", "desc": "최대 94% 할인"},
+    "롯데렌터카": {"url": "https://www.lotterentacar.net/hp/kor/reservation/index.do?state=2&rentArea=6", "desc": "웰컴 쿠폰팩 제공"},
+    "조아렌트카": {"url": "https://www.joarent.com", "desc": "즉시 예약 확정"},
 }
 
 courses = [
@@ -109,88 +312,62 @@ def find_vehicle_by_foreign(search_term):
         for korean_name, info in car_list.items():
             for foreign_name in info["foreign"]:
                 if search_lower in foreign_name.lower():
-                    results.append({
-                        "category": category,
-                        "korean_name": korean_name,
-                        "foreign_name": foreign_name,
-                        "rental": info["rental"]
-                    })
+                    results.append({"category": category, "korean_name": korean_name, "foreign_name": foreign_name, "rental": info["rental"]})
     return results
 
 def show_rental_tab(t):
-    st.subheader(t("🚗 렌트카 예약"))
-
-    # 자국 차량 검색
-    st.markdown(f"#### {t('🔍 자국 차량으로 검색')}")
-    st.caption(t("평소 몰던 차 이름을 영어로 입력하면 유사한 국내 차량을 찾아드려요!"))
-    foreign_search = st.text_input(t("차량 검색"), placeholder="예: Camry, Civic, RAV4, Golf")
-
+    st.markdown(f'<div class="section-label">{t("자국 차량으로 검색")}</div>', unsafe_allow_html=True)
+    st.caption(t("평소 몰던 차 이름을 입력하면 유사한 국내 차량을 찾아드려요"))
+    foreign_search = st.text_input("", placeholder="예: Camry, Civic, RAV4, Golf", label_visibility="collapsed")
     if foreign_search:
         found = find_vehicle_by_foreign(foreign_search)
         if found:
-            st.success(t(f"'{foreign_search}' 와 유사한 차량을 찾았어요!"))
             for f in found:
                 st.markdown(f"""
-                    <div style="background:#f0f8ff; border:1px solid #0077B6; border-radius:12px; padding:14px; margin-bottom:10px;">
-                        <b>🚗 {f['foreign_name']} → {f['korean_name']}</b>
-                        <span style="background:#0077B6; color:white; padding:2px 8px; border-radius:10px; font-size:12px; margin-left:8px;">{t(f['category'])}</span>
-                    </div>
+                <div class="vehicle-match">
+                    <div class="vehicle-match-title">🚗 {f['foreign_name']} → {f['korean_name']} <span class="tag">{t(f['category'])}</span></div>
+                    <div class="vehicle-match-sub">{t("예약 가능 업체")}</div>
+                </div>
                 """, unsafe_allow_html=True)
-                st.markdown(t("**예약 가능 업체:**"))
                 for r in f["rental"]:
                     info = rental_info[r]
                     st.markdown(f"""
-                        <a href="{info['url']}" target="_blank" style="
-                            display:block;
-                            background:#ffffff;
-                            border:1px solid #dee2e6;
-                            border-radius:8px;
-                            padding:10px 14px;
-                            margin-bottom:6px;
-                            text-decoration:none;
-                            color:#000000;">
-                            🏢 <b>{r}</b> — {t(info['desc'])}
-                        </a>
+                    <a href="{info['url']}" target="_blank" class="rental-card">
+                        <div class="rental-name">🏢 {r}</div>
+                        <div class="rental-desc">{t(info['desc'])}</div>
+                    </a>
                     """, unsafe_allow_html=True)
-                st.divider()
         else:
             st.warning(t(f"'{foreign_search}' 와 유사한 차량을 찾지 못했어요. 아래에서 직접 선택해주세요."))
 
-    st.markdown(f"#### {t('🚙 차종으로 직접 선택')}")
-    category = st.selectbox(t("차종 선택"), ["소형", "중형", "대형", "SUV"])
+    st.markdown(f'<div class="section-label">{t("차종으로 직접 선택")}</div>', unsafe_allow_html=True)
+    category = st.selectbox("", ["소형", "중형", "대형", "SUV"], label_visibility="collapsed")
     car_list = vehicles[category]
-    selected_car = st.selectbox(t("세부 차량 선택"), list(car_list.keys()))
-
+    selected_car = st.selectbox("", list(car_list.keys()), label_visibility="collapsed", key="car_select")
     if selected_car:
         car_info = car_list[selected_car]
-        st.info(t(f"✅ {selected_car} 선택됨"))
-        st.caption(t(f"유사 외국 차량: {', '.join(car_info['foreign'])}"))
-        st.markdown(t("**예약 가능 업체:**"))
+        st.markdown(f"""
+        <div class="card">
+            <div style="font-weight:600; color:#1a1a2e;">✅ {selected_car}</div>
+            <div style="font-size:0.8rem; color:#888; margin-top:4px;">{t("유사 외국 차량")}: {', '.join(car_info['foreign'])}</div>
+        </div>
+        """, unsafe_allow_html=True)
+        st.markdown(f'<div class="section-label">{t("예약 가능 업체")}</div>', unsafe_allow_html=True)
         for r in car_info["rental"]:
             info = rental_info[r]
             st.markdown(f"""
-                <a href="{info['url']}" target="_blank" style="
-                    display:block;
-                    background:#f0f8ff;
-                    border:1px solid #0077B6;
-                    border-radius:12px;
-                    padding:14px 18px;
-                    margin-bottom:8px;
-                    text-decoration:none;
-                    color:#000000;">
-                    🏢 <b>{r}</b><br>
-                    <span style="color:#555; font-size:14px;">{t(info['desc'])}</span>
-                </a>
+            <a href="{info['url']}" target="_blank" class="rental-card">
+                <div class="rental-name">🏢 {r}</div>
+                <div class="rental-desc">{t(info['desc'])}</div>
+            </a>
             """, unsafe_allow_html=True)
-        if "nav_vehicle" not in st.session_state:
-            st.session_state.nav_vehicle = category
         st.session_state.nav_vehicle = category
 
 def show_courses(vehicle_type, t):
-    st.subheader(t("🗺️ 추천 드라이브 코스"))
+    st.markdown(f'<div class="section-label">{t("추천 드라이브 코스")}</div>', unsafe_allow_html=True)
     for c in courses:
         if vehicle_type in c["recommended_vehicle"]:
-            with st.expander(f"✅ {t(c['name'])} | {t(c['difficulty'])} | {c['duration']}"):
+            with st.expander(f"✅ {t(c['name'])} · {t(c['difficulty'])} · {c['duration']}"):
                 st.write(" → ".join([t(s) for s in c["spots"]]))
 
 def show_navigation(destination, t):
@@ -205,76 +382,73 @@ def show_navigation(destination, t):
     first = docs[0]
     lat0 = float(first["y"])
     lng0 = float(first["x"])
-    m = folium.Map(location=[lat0, lng0], zoom_start=14)
-    st.subheader(t("📍 주변 주차장 위험도"))
+    m = folium.Map(location=[lat0, lng0], zoom_start=14, tiles="CartoDB positron")
+    st.markdown(f'<div class="section-label">{t("주변 주차장 위험도")}</div>', unsafe_allow_html=True)
     for p in docs:
         name = p["place_name"]
         lat = float(p["y"])
         lng = float(p["x"])
         score, level = calculate_danger_score(name, p["category_name"])
         color = "red" if score >= 50 else "orange" if score >= 20 else "green"
-        st.write(f"{level} **{name}**")
-        st.caption(f"{p['address_name']} | {t('위험점수')}: {score}점")
+        st.markdown(f"""
+        <div class="danger-item">
+            {level} <b>{name}</b><br>
+            <span style="font-size:0.8rem; color:#888;">{p['address_name']}</span>
+        </div>
+        """, unsafe_allow_html=True)
         folium.Marker([lat, lng], tooltip=f"{level} {name}", icon=folium.Icon(color=color)).add_to(m)
-    st.subheader(t("🏫 어린이보호구역"))
     zone_warnings = check_school_zone(lat0, lng0)
     if zone_warnings:
         for w in zone_warnings:
-            st.error(f"🔴 {t('경고')} - {w} | 30km/h")
+            st.error(f"🔴 {t('경고')} — {w} | 30km/h")
     else:
         st.success(t("✅ 주변 어린이보호구역 없음"))
-    st.subheader(t("🧭 네비게이션"))
     dest_name = docs[0]["place_name"]
     dest_lat = float(docs[0]["y"])
     dest_lng = float(docs[0]["x"])
     kakao_nav_url = f"kakaomap://route?ep={dest_lat},{dest_lng}&by=CAR"
     kakao_web_url = f"https://map.kakao.com/link/to/{dest_name},{dest_lat},{dest_lng}"
     st.markdown(f"""
-        <a href="{kakao_nav_url}" style="
-            display:inline-block; background:#FEE500; color:#000000;
-            padding:12px 24px; border-radius:8px; font-weight:bold;
-            text-decoration:none; margin-right:10px; font-size:16px;">
-            📱 카카오맵 앱으로 네비게이션
-        </a>
-        <a href="{kakao_web_url}" target="_blank" style="
-            display:inline-block; background:#0077B6; color:white;
-            padding:12px 24px; border-radius:8px; font-weight:bold;
-            text-decoration:none; font-size:16px;">
-            🌐 웹에서 길찾기
-        </a>
+    <div style="margin: 16px 0;">
+        <a href="{kakao_nav_url}" class="nav-btn" style="background:#FEE500; color:#1a1a2e;">📱 {t("카카오맵 네비게이션")}</a>
+        <a href="{kakao_web_url}" target="_blank" class="nav-btn" style="background:#0077B6; color:white;">🌐 {t("웹에서 길찾기")}</a>
+    </div>
     """, unsafe_allow_html=True)
-    st.subheader(t("🗾 지도"))
-    st_folium(m, width=700, height=400)
+    st.markdown(f'<div class="section-label">{t("지도")}</div>', unsafe_allow_html=True)
+    st_folium(m, width=700, height=380)
 
-# ── 메인 UI ──────────────────────────────
+# ── 메인 ─────────────────────────────────
 st.set_page_config(page_title="KVanguard Drive", page_icon="🚗", layout="centered")
-st.title("🚗 KVanguard Drive")
-st.caption("제주도 외국인 렌터카 드라이빙 어시스턴트")
+st.markdown(STYLE, unsafe_allow_html=True)
 
-language = st.selectbox("🌐 언어 / Language", list(languages.keys()))
+st.markdown("""
+<div class="main-header">
+    <div class="main-title">🚗 KVanguard Drive</div>
+    <div class="divider"></div>
+    <div class="main-subtitle">Jeju Island · Drive Assistant</div>
+</div>
+""", unsafe_allow_html=True)
+
+language = st.selectbox("", list(languages.keys()), label_visibility="collapsed")
 lang_code = languages[language]
 t = lambda text: translate(text, lang_code)
 
 st.divider()
 
-tab1, tab2, tab3 = st.tabs([
-    t("🚗 렌트카 예약"),
-    t("🗺️ 드라이브 코스"),
-    t("🧭 네비게이션")
-])
+tab1, tab2, tab3 = st.tabs([t("🚗 렌트카"), t("🗺️ 드라이브"), t("🧭 네비게이션")])
 
 with tab1:
     show_rental_tab(t)
 
 with tab2:
     vehicle_type = st.session_state.get("nav_vehicle", "소형")
-    vehicle_type = st.selectbox(t("🚙 차종"), ["소형", "중형", "대형", "SUV"],
+    vehicle_type = st.selectbox(t("차종"), ["소형", "중형", "대형", "SUV"],
         index=["소형", "중형", "대형", "SUV"].index(vehicle_type))
     show_courses(vehicle_type, t)
 
 with tab3:
-    destination = st.text_input(t("📍 목적지 입력"), placeholder="예: 제주 성산일출봉")
-    if st.button(t("🔍 검색하기")):
+    destination = st.text_input("", placeholder=t("목적지 입력 (예: 제주 성산일출봉)"), label_visibility="collapsed")
+    if st.button(t("검색하기")):
         if not destination:
             st.warning(t("목적지를 입력해주세요!"))
         else:
