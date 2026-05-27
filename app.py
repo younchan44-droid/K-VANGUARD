@@ -103,6 +103,38 @@ def show_results(destination, vehicle_type, lang_code):
         if vehicle_type in c["recommended_vehicle"]:
             with st.expander(f"✅ {t(c['name'])} | {t(c['difficulty'])} | {c['duration']}"):
                 st.write(" → ".join([t(s) for s in c["spots"]]))
+                st.subheader(t("🧭 네비게이션"))
+if docs:
+    dest_name = docs[0]["place_name"]
+    dest_lat = float(docs[0]["y"])
+    dest_lng = float(docs[0]["x"])
+    kakao_nav_url = f"kakaomap://route?ep={dest_lat},{dest_lng}&by=CAR"
+    kakao_web_url = f"https://map.kakao.com/link/to/{dest_name},{dest_lat},{dest_lng}"
+    st.markdown(f"""
+        <a href="{kakao_nav_url}" style="
+            display:inline-block;
+            background:#FEE500;
+            color:#000000;
+            padding:12px 24px;
+            border-radius:8px;
+            font-weight:bold;
+            text-decoration:none;
+            margin-right:10px;
+            font-size:16px;">
+            📱 카카오맵 앱으로 네비게이션
+        </a>
+        <a href="{kakao_web_url}" target="_blank" style="
+            display:inline-block;
+            background:#0077B6;
+            color:white;
+            padding:12px 24px;
+            border-radius:8px;
+            font-weight:bold;
+            text-decoration:none;
+            font-size:16px;">
+            🌐 웹에서 길찾기
+        </a>
+    """, unsafe_allow_html=True)
     st.subheader(t("🗾 지도"))
     st_folium(m, width=700, height=400)
 
