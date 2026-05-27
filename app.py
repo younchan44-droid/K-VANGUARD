@@ -134,6 +134,31 @@ def show_results(destination, vehicle_type, lang_code):
             🌐 웹에서 길찾기
         </a>
     """, unsafe_allow_html=True)
+st.subheader(t("🚗 렌트카 예약"))
+    rental_cars = [
+        {"name": "롯데렌탈 제주", "url": "https://www.lotterentcar.com", "desc": "전국 최대 렌트카"},
+        {"name": "카카오T 렌트", "url": "https://www.kakaot.com/rent", "desc": "카카오T 앱으로 간편 예약"},
+        {"name": "제주렌터카", "url": "https://www.jejurentcar.com", "desc": "제주 전문 렌트카"},
+        {"name": "AJ렌터카 제주", "url": "https://www.ajrentacar.co.kr", "desc": "합리적인 가격"},
+        {"name": "SK렌터카 제주", "url": "https://www.skrentacar.co.kr", "desc": "SK그룹 렌트카 서비스"},
+    ]
+    for r in rental_cars:
+        st.markdown(f"""
+            <a href="{r['url']}" target="_blank" style="
+                display:block;
+                background:#f8f9fa;
+                border:1px solid #dee2e6;
+                border-radius:8px;
+                padding:12px 16px;
+                margin-bottom:8px;
+                text-decoration:none;
+                color:#000000;">
+                🚗 <b>{t(r['name'])}</b> — {t(r['desc'])}
+            </a>
+        """, unsafe_allow_html=True)
+
+
+    
     st.subheader(t("🗾 지도"))
     st_folium(m, width=700, height=400)
 
