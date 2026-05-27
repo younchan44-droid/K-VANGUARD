@@ -103,8 +103,7 @@ def show_results(destination, vehicle_type, lang_code):
         if vehicle_type in c["recommended_vehicle"]:
             with st.expander(f"✅ {t(c['name'])} | {t(c['difficulty'])} | {c['duration']}"):
                 st.write(" → ".join([t(s) for s in c["spots"]]))
-                st.subheader(t("🧭 네비게이션"))
-if docs:
+    st.subheader(t("🧭 네비게이션"))
     dest_name = docs[0]["place_name"]
     dest_lat = float(docs[0]["y"])
     dest_lng = float(docs[0]["x"])
